@@ -1,0 +1,56 @@
+/**
+ * general5.p: general case 5
+ */
+#pragma source off
+#pragma token off
+#pragma statistic off
+int sptr;
+string data[100];
+int sizeStack = 100;
+void init();
+void general5()
+{
+        init("qq");
+        push("hello");
+        push(" C- language");
+        push("\n");
+
+        while(!isEmpty()){
+            print pop();
+        }
+}
+
+void init()
+{        
+        sptr = -1;
+}        
+
+void push(string item);
+void push(string item)
+{
+        sptr = sptr+1;
+        data[sptr] = item;
+}
+string top();
+string top()
+{
+        return data[sptr];
+}
+string pop();
+string pop()
+{
+        sptr = sptr-1;
+        return data[sptr+1];
+}
+
+bool isEmpty();
+bool isEmpty()
+{
+        return sptr == -1;
+}
+
+bool isFull();
+bool isFull()
+{
+        return (sptr == (sizeStack-1));
+}

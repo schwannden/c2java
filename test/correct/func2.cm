@@ -1,0 +1,23 @@
+/*
+ * Function_2
+ *
+ */
+#pragma source on
+#pragma token on
+#pragma statistic off
+int func2();
+
+int a;
+
+int main()
+{
+    int array[5];
+    return 0;
+}
+int func2()
+{
+    int d;
+    int tmp[5] = {1, 2, 3, 4, 5};
+    return tmp[4];
+}
+

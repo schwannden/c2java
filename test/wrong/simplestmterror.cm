@@ -1,0 +1,19 @@
+/**
+ * simplestmterror.cm: about assignment
+ */
+#pragma source off
+#pragma token off
+#pragma statistic off
+
+int func();
+int main()
+{
+    func() = 123;
+    return 0;
+}
+
+
+int func()
+{
+    return 32;
+}

@@ -1,0 +1,34 @@
+/*
+ * Function_7
+ *
+ */
+#pragma source off
+#pragma token off
+#pragma statistic off
+int func2();
+
+int a;
+
+int main()
+{
+    int array[5];
+    return 0;
+}
+int d = 0;
+void func3();
+int func2()
+{
+    int d;
+    int tmp[5][2];
+    return tmp[5][2];
+}
+void func3(int ap[1][4], string b)
+{
+}
+int c = 0;
+string func4(double a[33][22][11], bool a, float c);
+string func4(double a[33][22][11], bool a, float c)
+{
+	string name = "name";
+	return name;
+}

@@ -1,0 +1,26 @@
+//test for and while loop with some statement
+#pragma source off
+#pragma token off
+#pragma statistic off
+void whilefor5()
+{
+    bool a;
+    int b = 0;
+    while(a){
+        for(b = -100 ; b <= 0; )
+        {
+            b = b+1;
+            while(a){
+                int c = 10;
+                for(; c <= 12; c = c+1)
+                {
+                    break;
+                }
+            }
+        }
+        while(a)
+        {
+            break;
+        }
+    }
+}

@@ -3,13 +3,14 @@
 #include "lib/common.h"
 #include "lib/symbolTable.h"
 #include "lib/hashtb.h"
+#include "y.tab.h"
 #define LIST                { strncat(buf, yytext, sizeof(buf) - strlen(buf) - 1); }
 #define token(t)            { LIST; if (Opt_Token) printf("<%s>\n", t); }
 #define tokenString(t, s)   { LIST; if (Opt_Token) printf("<%s:%s>\n", t, s); }
 //initial variables
-int Opt_Source = 1;
-int Opt_Token = 1;
-int Opt_Statistic = 1;
+int Opt_Source = 0;
+int Opt_Token = 0;
+int Opt_Statistic = 0;
 int linenum = 1;
 char buf[MAX_LINE_LENGTH];
 char stringBuf[MAX_LINE_LENGTH];
@@ -57,9 +58,8 @@ digit     [0-9]
 letter    [a-zA-Z]
 integer   0|([1-9]{digit}*)
 float     {digit}+\.{digit}+
-keyword   "while"|"do"|"if"|"else"|"true"|"false"|"for"|"int"|"print"|"const"|"read"|"boolean"|"bool"|"void"|"float"|"double"|"string"|"continue"|"break"|"return"
 directive "source"|"statistics"|"token"
-%x BCOMMENT LCOMMENT DIRECTIVE DIRECTIVEEND D_STATISTIC D_SOURCE D_TOKEN STRING
+%x BCOMMENT LCOMMENT DIRECTIVE DIRECTIVEEND D_STATISTIC D_SOURCE D_TOKEN D_STRING
 
 %%
 <INITIAL,DIRECTIVEEND>"/*" { BEGIN BCOMMENT; LIST; }
@@ -82,29 +82,53 @@ directive "source"|"statistics"|"token"
 <DIRECTIVEEND>\n   { BEGIN INITIAL; endOfLine(); }
 <DIRECTIVEEND>[^\n] errorLex ();
 
-[(){},;\[\]]                           { tokenString ("delim", yytext); }
-{integer}                              { tokenString ("integer", yytext); }
-{float}                                { tokenString ("float", yytext); }
-{keyword}                              { tokenString ("KW", yytext); }
-({float}|{integer})(e|E)[-+]?{digit}+  { tokenString ("scientific", yytext); }
-{letter}+({letter}|{digit})*           { tokenString ("id", yytext); addID(yytext); }
-<INITIAL>\"                            { LIST; BEGIN STRING; stringBuf[0] = '\0'; }
-<STRING>\n                             { LIST; errorLex (); }
-<STRING>\\\"                           { LIST; strcat (stringBuf, "\""); }
-<STRING>\\[^"]|[^\\\n"]                { LIST; strcat (stringBuf, yytext); }
-<STRING>\"                             { BEGIN INITIAL; tokenString ("string", stringBuf); }
+while                                { tokenString ("KW", yytext); return WHILE; }
+do                                   { tokenString ("KW", yytext); return DO; }
+if                                   { tokenString ("KW", yytext); return IF; }
+else                                 { tokenString ("KW", yytext); return ELSE; }
+true                                 { tokenString ("KW", yytext); return TRUE; }
+false                                { tokenString ("KW", yytext); return FALSE; }
+for                                  { tokenString ("KW", yytext); return FOR; }
+int                                  { tokenString ("KW", yytext); return INT; }
+print                                { tokenString ("KW", yytext); return PRINT; }
+const                                { tokenString ("KW", yytext); return CONST; }
+read                                 { tokenString ("KW", yytext); return READ; }
+boolean                              { tokenString ("KW", yytext); return BOOL; }
+bool                                 { tokenString ("KW", yytext); return BOOL; }
+void                                 { tokenString ("KW", yytext); return VOID; }
+float                                { tokenString ("KW", yytext); return FLOAT; }
+double                               { tokenString ("KW", yytext); return DOUBLE; }
+string                               { tokenString ("KW", yytext); return STRING; }
+continue                             { tokenString ("KW", yytext); return CONTINUE; }
+break                                { tokenString ("KW", yytext); return BREAK; }
+return                               { tokenString ("KW", yytext); return RETURN; }
 
-[-+*/%<>!=]|[<>!=]?=|"&&"|"||"         { token (quote (stringBuf,yytext)); }
+[-+*/%<>!=]                          { token (quote (stringBuf,yytext)); return yytext[0]; }
+"<="                                 { token (quote (stringBuf,yytext)); return LTE; }
+">="                                 { token (quote (stringBuf,yytext)); return GTE; }
+"!="                                 { token (quote (stringBuf,yytext)); return NEQ; }
+"=="                                 { token (quote (stringBuf,yytext)); return EQ;  }
+"&&"                                 { token (quote (stringBuf,yytext)); return AND; }
+"||"                                 { token (quote (stringBuf,yytext)); return OR;  }
+
+[(){},;\[\]]                           { tokenString ("delim", yytext); return yytext[0]; }
+{integer}                              { tokenString ("integer", yytext); return LITERAL_INT; }
+{float}                                { tokenString ("float", yytext); return LITERAL_FLOAT; }
+({float}|{integer})(e|E)[-+]?{digit}+  { tokenString ("scientific", yytext); return LITERAL_FLOAT; }
+{letter}+({letter}|{digit})*           { tokenString ("id", yytext); addID(yytext); return ID; }
+<INITIAL>\"                            { LIST; BEGIN D_STRING; stringBuf[0] = '\0'; }
+<D_STRING>\n                             { LIST; errorLex (); }
+<D_STRING>\\\"                           { LIST; strcat (stringBuf, "\""); }
+<D_STRING>\\[^"]|[^\\\n"]                { LIST; strcat (stringBuf, yytext); }
+<D_STRING>\"                             { BEGIN INITIAL; tokenString ("string", stringBuf); return LITERAL_STRING; }
+
 \n                                     endOfLine();
 [\t ]                                  LIST; //ignored charactor
 .                                      errorLex ();
 %%
 
-int main( int argc, char **argv )
+/*int main( int argc, char **argv )
 {
-    st  = hashtb_create (sizeof(int), NULL);
-    ste = calloc (1, sizeof(*ste));
-    hashtb_start (st, ste);
     if (argc >= 2)
     {
         yyin = fopen( argv[1], "r" );
@@ -133,8 +157,6 @@ int main( int argc, char **argv )
           }
     }
 
-    hashtb_end (ste);
-    hashtb_destroy (&st);
     exit(0);
-}
+} */
 

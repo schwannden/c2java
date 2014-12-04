@@ -1,0 +1,4 @@
+//There should be at least one function definition existed in the program
+#pragma source off
+#pragma token off
+#pragma statistic off

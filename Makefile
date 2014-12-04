@@ -1,19 +1,28 @@
 CC     = gcc
-OBJS   = lib/symbolTable.o lib/hashtb.o lex.yy.o 
+OBJS   = lib/symbolTable.o lib/hashtb.o lex.yy.o y.tab.o
 LEX_C  = lex.yy.c
 LEX_L  = lex.l
-FINAL  = scanner
+YACC_C = y.tab.c
+YACC_H = y.tab.h
+YACC_Y = parser.y
+FINAL  = parser
 
 all: ${FINAL}
 
-scanner: ${OBJS}
-	${CC} -o ${FINAL} -ll ${OBJS}
+${FINAL}: ${OBJS}
+	${CC} -o parser -ll -ly ${OBJS}
 
 %.o: %.c
 	${CC} -c -o $@ $<
 
-${LEX_C}: ${LEX_L}
+${YACC_C}: ${YACC_Y}
+	yacc -d -v --debug --verbose ${YACC_Y}
+
+${YACC_H}: ${YACC_Y}
+	yacc -d -v --debug --verbose ${YACC_Y}
+
+${LEX_C}: ${LEX_L} ${YACC_H}
 	lex ${LEX_L}
 
 clean:
-	rm -rf ${LEX_C} ${FINAL} ${OBJS}
+	rm -rf ${LEX_C} ${FINAL} ${OBJS} ${YACC_C} y.*

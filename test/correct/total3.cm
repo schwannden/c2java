@@ -1,0 +1,29 @@
+/*
+ * Program_total3
+ *
+ */
+ 
+#pragma source off
+#pragma token off
+#pragma statistic off
+bool b, c;
+int fun2();
+void total3()
+{
+    int d;
+}
+int fun();
+int fun()
+{
+    return 10;
+}
+int fun3();
+int fun2()
+{
+    return 20;
+}
+
+int fun3()
+{
+    return 30;
+}

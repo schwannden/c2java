@@ -1,0 +1,25 @@
+/*
+ * Function_5
+ *
+ */
+#pragma source off
+#pragma token off
+#pragma statistic off
+int func2();
+
+int a;
+
+int main()
+{
+    int array[5];
+    return 0;
+}
+int d = 0;
+
+int func2()
+{
+    int d;
+    int tmp[5][2];
+    return tmp[5][2];
+}
+int c = 0;

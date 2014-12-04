@@ -27,15 +27,13 @@ fi
 
 detectOS
 
-sed $sedFlag 's/fprintf(stderr/fprintf(stdout/g' $sedfile
 make
-for testFile in `ls test/input`
+for testFile in `ls test/correct`
 do
   printf  "testing %-30s" "$testFile...."
-  ./scanner test/input/$testFile > test/output/$testFile
-  diff test/output/$testFile test/answer/$testFile
-  diffStatus=$?
-  if [ $diffStatus -eq 0 ]
+  ./parser test/correct/$testFile 
+  status=$?
+  if [ $status -eq 0 ]
   then
     echo "Done testing $testFile"......
   else
@@ -44,6 +42,21 @@ do
   fi
 done
 
-sed $sedFlag 's/fprintf(stdout/fprintf(stderr/g' $sedfile
-rm -f lex.l\'\'
+for testFile in `ls test/wrong`
+do
+  printf  "testing %-30s" "$testFile...."
+  ./parser test/wrong/$testFile 
+  status=$?
+  if [ $status -eq 0 ]
+  then
+    echo Error in $testFile!!
+    exit;
+  else
+    echo "Done testing $testFile"......
+  fi
+done
+
+echo "\n|-------------------------|"
+echo   "| Done testing all files! |"
+echo   "|-------------------------|"
 

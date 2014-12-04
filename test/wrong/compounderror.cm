@@ -1,0 +1,24 @@
+//compounderror a mismatch brace
+#pragma source off
+#pragma token off
+#pragma statistic off
+int func();
+
+int b;
+float a;
+int main()
+{
+    {
+        {
+            {
+                {   
+                    //lose a right brace
+            }
+        }
+    }
+}
+
+int func()
+{
+
+}

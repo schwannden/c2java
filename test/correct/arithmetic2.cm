@@ -1,0 +1,20 @@
+/**
+ * arithmetic2.p: arithmetic expressions, double
+ */
+
+#pragma source off
+#pragma token off
+#pragma statistic off
+int main()
+{
+
+        double a,b;
+
+        a = 1.0+1.0;
+        a = a+a;
+        a = a-3*15E-1;
+        b = a*11.3;
+        b = a/b;
+        a = b/3.1415926;
+        b = b - 14.52;
+}

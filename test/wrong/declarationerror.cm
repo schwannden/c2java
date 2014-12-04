@@ -1,0 +1,12 @@
+//declarationerror array declaration error
+#pragma source off
+#pragma token off
+#pragma statistic off
+
+int main()
+{
+    int a;
+    float b;
+    float c;
+    double d[5][5][a];
+}
