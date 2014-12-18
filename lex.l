@@ -111,16 +111,16 @@ return                               { tokenString ("KW", yytext); return RETURN
 "&&"                                 { token (quote (stringBuf,yytext)); return AND; }
 "||"                                 { token (quote (stringBuf,yytext)); return OR;  }
 
-[(){},;\[\]]                           { tokenString ("delim", yytext); return yytext[0]; }
-{integer}                              { tokenString ("integer", yytext); return LITERAL_INT; }
-{float}                                { tokenString ("float", yytext); return LITERAL_FLOAT; }
-({float}|{integer})(e|E)[-+]?{digit}+  { tokenString ("scientific", yytext); return LITERAL_FLOAT; }
-{letter}+({letter}|{digit})*           { tokenString ("id", yytext); addID(yytext); return ID; }
-<INITIAL>\"                            { LIST; BEGIN D_STRING; stringBuf[0] = '\0'; }
-<D_STRING>\n                             { LIST; errorLex (); }
-<D_STRING>\\\"                           { LIST; strcat (stringBuf, "\""); }
-<D_STRING>\\[^"]|[^\\\n"]                { LIST; strcat (stringBuf, yytext); }
-<D_STRING>\"                             { BEGIN INITIAL; tokenString ("string", stringBuf); return LITERAL_STRING; }
+[(){},;\[\]]                         { tokenString ("delim", yytext); return yytext[0]; }
+{integer}                            { tokenString ("integer", yytext); return LITERAL_INT; }
+{float}                              { tokenString ("float", yytext); return LITERAL_FLOAT; }
+({float}|{integer})(e|E)[-+]?{digit}+{ tokenString ("scientific", yytext); return LITERAL_FLOAT; }
+{letter}+({letter}|{digit})*         { tokenString ("id", yytext); addID(yytext); return ID; }
+<INITIAL>\"                          { LIST; BEGIN D_STRING; stringBuf[0] = '\0'; }
+<D_STRING>\n                         { LIST; errorLex (); }
+<D_STRING>\\\"                       { LIST; strcat (stringBuf, "\""); }
+<D_STRING>\\[^"]|[^\\\n"]            { LIST; strcat (stringBuf, yytext); }
+<D_STRING>\"                         { BEGIN INITIAL; tokenString ("string", stringBuf); return LITERAL_STRING; }
 
 \n                                     endOfLine();
 [\t ]                                  LIST; //ignored charactor
