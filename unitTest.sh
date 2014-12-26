@@ -30,7 +30,7 @@ detectOS
 make
 for testFile in `ls test/correct`
 do
-  printf  "testing %-30s" "$testFile...."
+  printf  "testing %-30s \n" "$testFile...."
   ./parser test/correct/$testFile 
   status=$?
   if [ $status -eq 0 ]
@@ -44,7 +44,7 @@ done
 
 for testFile in `ls test/wrong`
 do
-  printf  "testing %-30s" "$testFile...."
+  printf  "testing %-30s \n" "$testFile...."
   ./parser test/wrong/$testFile 
   status=$?
   if [ $status -eq 0 ]

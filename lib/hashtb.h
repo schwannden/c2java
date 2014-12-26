@@ -26,6 +26,7 @@
 #define NDN_HASHTB_DEFINED
 
 #include <stddef.h>
+#include "common.h"
 
 #define DATA(ht, p) ((void *)((p) + 1))
 #define KEY(ht, p) ((unsigned char *)((p) + 1) + ht->item_size)
@@ -33,36 +34,56 @@
 #define CHECKHTE(ht, hte) ((uintptr_t)((hte)->priv[1]) == ~(uintptr_t)(ht))
 #define MARKHTE(ht, hte) ((hte)->priv[1] = (void*)~(uintptr_t)(ht))
 
+struct Attributes {
+  int frequency;
+  int scope;
+  int type;
+  int value;
+  int defined;
+  int declared;
+  int array[MAX_DIMENSION];
+  int function[MAX_FORMAL_SIZE][MAX_DIMENSION+1];
+};
 
-struct node {
-    struct node* link;
+typedef struct Attributes Attributes;
+
+struct exp { int type; int dimension; };
+
+struct Node {
+    struct Node* link;
     size_t hash;
     size_t keysize;
     size_t extsize;
     /* user data follows immediately, followed by key */
 };
 
-struct hashtb_enumerator;
-typedef void (*hashtb_finalize_proc)(struct hashtb_enumerator *);
-struct hashtb_param {
+typedef struct Node Node;
+
+struct Hashtb_enumerator;
+typedef void (*hashtb_finalize_proc)(struct Hashtb_enumerator *);
+struct Hashtb_param {
     hashtb_finalize_proc finalize; /* default is NULL */
     void *finalize_data;           /* default is NULL */
     int orders;                    /* default is 0 */
 }; 
 
-struct hashtb {
-    struct node **bucket;
+typedef struct Hashtb_param Hashtb_param;
+
+struct Hashtb {
+    Node **bucket;
     size_t item_size;           /* Size of client's per-entry data */
     unsigned n_buckets;
     int n;                      /* Number of entries */
     int refcount;               /* Number of open enumerators */
-    struct node *deferred;      /* deferred cleanup */
-    struct hashtb_param param;  /* saved client parameters */
+    Node *deferred;      /* deferred cleanup */
+    Hashtb_param param;  /* saved client parameters */
 };
 
+typedef struct Hashtb Hashtb;
+
 /* The client owns the memory for an enumerator, normally in a local. */ 
-struct hashtb_enumerator {
-    struct hashtb *ht;
+struct Hashtb_enumerator {
+    Hashtb *ht;
     const void *key;        /* Key concatenated with extension data */
     size_t keysize;
     size_t extsize;
@@ -70,6 +91,32 @@ struct hashtb_enumerator {
     size_t datasize;
     void *priv[3];
 };
+
+/*
+ * This is a stack designed specifically for holding symbol table
+ * it can hold a maximum of MAX_STACK_SIZE symbol tables
+ * MAX_STACK_SIZE can be found in common.h
+ * pushing a Hashtb into Stack is not allowed
+ * push (stack) simply add a new empty hash
+ */
+struct Stack {
+    int top, front;
+    size_t item_size;
+    Hashtb tables[MAX_STACK_SIZE];
+} stack;
+
+typedef struct Stack Stack;
+
+void
+stack_init (Stack* stack, size_t itemsize);
+
+int
+push (Stack* stack);
+
+void
+pop (Stack* stack);
+
+typedef struct Hashtb_enumerator Hashtb_enumerator;
 
 /*
  * hashtb_hash: Calculate a hash for the given key.
@@ -82,8 +129,8 @@ hashtb_hash(const unsigned char *key, size_t key_size);
  * The param may be NULL to use the defaults, otherwise
  * a copy of *param is made.
  */
-struct hashtb *
-hashtb_create(size_t item_size, const struct hashtb_param *param);
+Hashtb *
+hashtb_create(size_t item_size, const Hashtb_param *param);
 
 /*
  * hashtb_get_param: Get the parameters used when creating ht.
@@ -91,19 +138,19 @@ hashtb_create(size_t item_size, const struct hashtb_param *param);
  * other parameters are needed.
  */
 void *
-hashtb_get_param(struct hashtb *ht, struct hashtb_param *param);
+hashtb_get_param(Hashtb *ht, Hashtb_param *param);
 
 /*
  * hashtb_destroy: Destroy a hash table and all of its elements.
  */
 void
-hashtb_destroy(struct hashtb **ht);
+hashtb_destroy(Hashtb **ht);
 
 /*
  * hashtb_n: Get current number of elements.
  */
 int
-hashtb_n(struct hashtb *ht);
+hashtb_n(Hashtb *ht);
 
 /*
  * hashtb_lookup: Find an item
@@ -111,7 +158,7 @@ hashtb_n(struct hashtb *ht);
  * Returns NULL if not found, or a pointer to the item's data.
  */
 void *
-hashtb_lookup(struct hashtb *ht, const void *key, size_t keysize);
+hashtb_lookup(Hashtb *ht, const void *key, size_t keysize);
 
 /*
  * hashtb_start: initializes enumerator to first table entry
@@ -120,11 +167,11 @@ hashtb_lookup(struct hashtb *ht, const void *key, size_t keysize);
  * and must call hashtb_end when done.
  * Returns second argument.
  */
-struct hashtb_enumerator *
-hashtb_start(struct hashtb *, struct hashtb_enumerator *);
-void hashtb_end(struct hashtb_enumerator *);
+Hashtb_enumerator *
+hashtb_start(Hashtb *, Hashtb_enumerator *);
+void hashtb_end(Hashtb_enumerator *);
 
-int hashtb_next(struct hashtb_enumerator *);
+int hashtb_next(Hashtb_enumerator *);
 
 /*
  * hashtb_seek: Find or add an item
@@ -139,7 +186,7 @@ int hashtb_next(struct hashtb_enumerator *);
  *        -1 for a fatal error (ENOMEM or key==NULL).
  */
 int
-hashtb_seek(struct hashtb_enumerator *hte,
+hashtb_seek(Hashtb_enumerator *hte,
             const void *key, size_t keysize, size_t extsize);
 #define HT_OLD_ENTRY 0
 #define HT_NEW_ENTRY 1
@@ -154,7 +201,7 @@ hashtb_seek(struct hashtb_enumerator *hte,
  * When the delete returns, the enumerator will be positioned
  * at the next item.
  */
-void hashtb_delete(struct hashtb_enumerator *);
+void hashtb_delete(Hashtb_enumerator *);
 
 /*
  * hashtb_rehash: Hint about number of buckets to use
@@ -164,6 +211,6 @@ void hashtb_delete(struct hashtb_enumerator *);
  * table has shrunken dramatically and is not expected to grow soon.
  * Does nothing if there are any active enumerators.
  */
-void hashtb_rehash(struct hashtb *ht, unsigned n_buckets);
+void hashtb_rehash(Hashtb *ht, unsigned n_buckets);
 
 #endif

@@ -1,5 +1,5 @@
 CC     = gcc
-OBJS   = lib/symbolTable.o lib/hashtb.o lex.yy.o y.tab.o
+OBJS   = lib/hashtb.o lex.yy.o y.tab.o
 LEX_C  = lex.yy.c
 LEX_L  = lex.l
 YACC_C = y.tab.c
@@ -13,7 +13,7 @@ ${FINAL}: ${OBJS}
 	${CC} -o parser -ll -ly ${OBJS}
 
 %.o: %.c
-	${CC} -c -o $@ $<
+	${CC} -c -g -o $@ $<
 
 ${YACC_C}: ${YACC_Y}
 	yacc -d -v --debug --verbose ${YACC_Y}

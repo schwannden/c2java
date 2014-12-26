@@ -7,10 +7,13 @@ LIB    = lib/
 
 
 
-all: symbolTable.o
+all: hashtb.o
 
-symbolTable.o: symbolTable.c
-	gcc -c symbolTable.c
+hashtb.o: hashtb.c
+	gcc -c hashtb.c
+
+error_function.o: error_function.c
+	gcc -c error_function.c
 
 clean:
 	rm -rf *.o

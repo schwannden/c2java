@@ -36,16 +36,16 @@ hashtb_hash(const unsigned char *key, size_t key_size)
     return(h);
 }
 
-struct hashtb *
-hashtb_create(size_t item_size, const struct hashtb_param *param)
+Hashtb *
+hashtb_create(size_t item_size, const Hashtb_param *param)
 {
-    struct hashtb *ht;
-    ht = calloc(1, sizeof(*ht));
+    Hashtb *ht;
+    ht = (Hashtb*) calloc(1, sizeof(*ht));
     if (ht != NULL) {
         ht->item_size = item_size;
         ht->n = 0;
         ht->n_buckets = 7;
-        ht->bucket = calloc(ht->n_buckets, sizeof(ht->bucket[0]));
+        ht->bucket = (Node**) calloc(ht->n_buckets, sizeof(ht->bucket[0]));
 	if (ht->bucket == NULL) {
 		free(ht);
 		return (NULL); /*ENOMEM*/
@@ -57,7 +57,7 @@ hashtb_create(size_t item_size, const struct hashtb_param *param)
 }
 
 void *
-hashtb_get_param(struct hashtb *ht, struct hashtb_param *param)
+hashtb_get_param(Hashtb *ht, Hashtb_param *param)
 {
     if (param != NULL)
         *param = ht->param;
@@ -66,11 +66,11 @@ hashtb_get_param(struct hashtb *ht, struct hashtb_param *param)
 
 //why use hashtb ** instead of hashtb *
 void
-hashtb_destroy(struct hashtb **htp)
+hashtb_destroy(Hashtb **htp)
 {
     if (*htp != NULL) {
-        struct hashtb_enumerator tmp;
-        struct hashtb_enumerator *e = hashtb_start(*htp, &tmp);
+        Hashtb_enumerator tmp;
+        Hashtb_enumerator *e = hashtb_start(*htp, &tmp);
         while (e->key != NULL)
             hashtb_delete(e);
         hashtb_end(&tmp);
@@ -85,19 +85,19 @@ hashtb_destroy(struct hashtb **htp)
 }
 
 int
-hashtb_n(struct hashtb *ht)
+hashtb_n(Hashtb *ht)
 {
     return(ht->n);
 }
 
 void *
-hashtb_lookup(struct hashtb *ht, const void *key, size_t keysize)
+hashtb_lookup(Hashtb *ht, const void *key, size_t keysize)
 {
-    struct node *p;
+    Node *p;
     size_t h;
     if (key == NULL)
         return(NULL);
-    h = hashtb_hash(key, keysize);
+    h = hashtb_hash( (const unsigned char*) key, keysize);
     for (p = ht->bucket[h % ht->n_buckets]; p != NULL; p = p->link) {
         if (p->hash < h)
             continue;
@@ -111,10 +111,10 @@ hashtb_lookup(struct hashtb *ht, const void *key, size_t keysize)
 
 //set hashtb_enumerator to point to pp (a pointer to a particular bucket)
 static void
-setpos(struct hashtb_enumerator *hte, struct node **pp)
+setpos(Hashtb_enumerator *hte, Node **pp)
 {
-    struct hashtb *ht = hte->ht;
-    struct node *p = NULL;
+    Hashtb *ht = hte->ht;
+    Node *p = NULL;
     hte->priv[0] = pp;
     if (pp != NULL)
         p = *pp;
@@ -133,8 +133,8 @@ setpos(struct hashtb_enumerator *hte, struct node **pp)
 }
 
 //return first non-null bucket after bucket b
-static struct node **
-scan_buckets(struct hashtb *ht, unsigned b)
+static Node **
+scan_buckets(Hashtb *ht, unsigned b)
 {
     for (; b < ht->n_buckets; b++)
         if (ht->bucket[b] != NULL)
@@ -143,8 +143,8 @@ scan_buckets(struct hashtb *ht, unsigned b)
 }
 
 #define MAX_ENUMERATORS 30
-struct hashtb_enumerator *
-hashtb_start(struct hashtb *ht, struct hashtb_enumerator *hte)
+Hashtb_enumerator *
+hashtb_start(Hashtb *ht, Hashtb_enumerator *hte)
 {
     MARKHTE(ht, hte);
     hte->datasize = ht->item_size;
@@ -157,10 +157,10 @@ hashtb_start(struct hashtb *ht, struct hashtb_enumerator *hte)
 }
 
 void
-hashtb_end(struct hashtb_enumerator *hte)
+hashtb_end(Hashtb_enumerator *hte)
 {
-    struct hashtb *ht = hte->ht;
-    struct node *p;
+    Hashtb *ht = hte->ht;
+    Node *p;
     hashtb_finalize_proc f;
     if (!CHECKHTE(ht, hte) || ht->refcount <= 0) abort();
     if (ht->refcount == 1) {
@@ -181,10 +181,10 @@ hashtb_end(struct hashtb_enumerator *hte)
 }
 
 int
-hashtb_next(struct hashtb_enumerator *hte)
+hashtb_next(Hashtb_enumerator *hte)
 {
-    struct node **pp = hte->priv[0];
-    struct node **ppp;
+    Node **pp = (Node**) hte->priv[0];
+    Node **ppp;
     if (pp != NULL) {
         ppp = pp;
         pp = &((*pp)->link);
@@ -197,11 +197,11 @@ hashtb_next(struct hashtb_enumerator *hte)
 }
 
 int
-hashtb_seek(struct hashtb_enumerator *hte, const void *key, size_t keysize, size_t extsize)
+hashtb_seek(Hashtb_enumerator *hte, const void *key, size_t keysize, size_t extsize)
 {
-    struct node *p = NULL;
-    struct hashtb *ht = hte->ht;
-    struct node **pp;
+    Node *p = NULL;
+    Hashtb *ht = hte->ht;
+    Node **pp;
     size_t h;
     if (key == NULL) {
         setpos(hte, NULL);
@@ -212,7 +212,7 @@ hashtb_seek(struct hashtb_enumerator *hte, const void *key, size_t keysize, size
         hashtb_rehash(ht, 2 * ht->n + 1);
         ht->refcount++;
     }
-    h = hashtb_hash(key, keysize);
+    h = hashtb_hash((const unsigned char*) key, keysize);
     pp = &(ht->bucket[h % ht->n_buckets]);
     for (p = *pp; p != NULL; pp = &(p->link), p = p->link) {
         if (p->hash < h)
@@ -224,7 +224,7 @@ hashtb_seek(struct hashtb_enumerator *hte, const void *key, size_t keysize, size
             return(HT_OLD_ENTRY);
         }
     }
-    p = calloc(1, sizeof(*p) + ht->item_size + keysize + extsize);
+    p = (Node*) calloc(1, sizeof(*p) + ht->item_size + keysize + extsize);
     if (p == NULL) {
         setpos(hte, NULL);
         return(-1);
@@ -241,11 +241,11 @@ hashtb_seek(struct hashtb_enumerator *hte, const void *key, size_t keysize, size
 }
 
 void
-hashtb_delete(struct hashtb_enumerator *hte)
+hashtb_delete(Hashtb_enumerator *hte)
 {
-    struct hashtb *ht = hte->ht;
-    struct node **pp = hte->priv[0];
-    struct node *p = *pp;
+    Hashtb *ht = hte->ht;
+    Node **pp = (Node**) hte->priv[0];
+    Node *p = *pp;
     if ((p != NULL) && CHECKHTE(ht, hte) && KEY(ht, p) == hte->key) {
         *pp = p->link;
         if (*pp == NULL)
@@ -266,18 +266,18 @@ hashtb_delete(struct hashtb_enumerator *hte)
 }
 
 void
-hashtb_rehash(struct hashtb *ht, unsigned n_buckets)
+hashtb_rehash(Hashtb *ht, unsigned n_buckets)
 {
-    struct node **bucket = NULL;
-    struct node **pp;
-    struct node *p;
-    struct node *q;
+    Node **bucket = NULL;
+    Node **pp;
+    Node *p;
+    Node *q;
     size_t h;
     unsigned i;
     unsigned b;
     if (ht->refcount != 0 || n_buckets < 1 || n_buckets == ht->n_buckets)
         return;
-    bucket = calloc(n_buckets, sizeof(bucket[0]));
+    bucket = (Node**) calloc(n_buckets, sizeof(bucket[0]));
     if (bucket == NULL) return; /* ENOMEM */
     for (i = 0; i < ht->n_buckets; i++) {
         for (p = ht->bucket[i]; p != NULL; p = q) {
@@ -295,3 +295,40 @@ hashtb_rehash(struct hashtb *ht, unsigned n_buckets)
     ht->n_buckets = n_buckets;
 }
 
+void
+stack_init (Stack* stack, size_t item_size)
+{
+    stack->top = 0;
+    stack->front = -1;
+    stack->item_size = item_size;
+}
+
+int
+push (Stack* stack)
+{
+    stack->front++;
+    stack->top++;
+    stack->tables[stack->front].item_size = stack->item_size;
+    stack->tables[stack->front].n = 0;
+    stack->tables[stack->front].n_buckets = 7;
+    stack->tables[stack->front].bucket = (Node**) calloc(stack->tables[stack->front].n_buckets, sizeof(stack->tables[0].bucket[0]));
+    if (stack->tables[stack->front].bucket == NULL) {
+        return (-1); /*ENOMEM*/
+    }
+    return stack->front;
+}
+
+void
+pop (Stack* stack)
+{
+    Hashtb* p = &(stack->tables[stack->front]);
+    Hashtb_enumerator ste;
+    Hashtb_enumerator *e = hashtb_start(p, &ste);
+    while (e->key != NULL)
+        hashtb_delete(e);
+    hashtb_end(&ste);
+    if (p->refcount == 0)
+        free(p->bucket);
+    stack->top--;
+    stack->front--;
+}
